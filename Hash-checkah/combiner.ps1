@@ -3,62 +3,62 @@
 #
 param(
 [string]$inputtarget=".\refined.csv",
+[string]$inputt = ".\results.csv",
 [string]$prioritytarget=".\priorityresults.csv",
 [string]$outputtarget=".\report.csv",
 [string]$priorityoutput=".\priorityreport.csv",
 [string]$suspectinput=".\suspectresults.csv",
 [string]$suspectoutput=".\suspectreport.csv"
 )
-
+$MyParam = $MyInvocation.MyCommand.Parameters
+foreach($item in $MyParam.Keys)
+{
+	New-Item (Get-Variable $item).Value -ItemType File -ErrorAction SilentlyContinue
+	(Get-Variable $item).Value = Resolve-Path (Get-Variable $item).Value 
+	Write-Host "Creating $((Get-Variable $item).Value) for $item"
+}
 Write-Host "Beginning Recombination"
-$inputtarget = resolve-path $inputtarget
-$prioritytarget = resolve-path $prioritytarget
-$outputtarget = resolve-path $outputtarget
-$priorityoutput = resolve-path $priorityoutput
-$suspectinput = resolve-path $suspectinput
-$suspectoutput = resolve-path $suspectoutput
+
 $('DeviceName,Filepath,Hash')| Out-File -FilePath $outputtarget
 $('DeviceName,Filepath,Hash')| Out-File -FilePath $priorityoutput
 $('DeviceName,Filepath,Hash')| Out-File -FilePath $suspectoutput
 
-function Normalprocess($input, $output, $list)
+function Normalprocess
 {
-Write-Host "Recombining $input and $list into $output"
-$badhashes = Get-Content $input | select -Skip 1 | ForEach-Object {$_ -split(",")}
-$rawlist = Get-Content $list | select -Skip 1 | ForEach-Object {$_ -split(",")}
-$rawhashes = @()
-foreach($item in $badhashes)
-{
-	$rawhashes += $item[1]
-}
-
-$refinedlist = @()
-
-
-$counter =-1
-for($count = 0; $count -lt $rawlist.Length; $count++)
-{
-	$holder = $rawlist[$count][0]
-	switch ($holder)
+	param(
+	[string]$inp,
+	[string]$output,
+	[string]$list
+	)
+	Write-Host "Recombining $inp and $list into $output"
+	$vtdata = Import-Csv $inp 
+	$badhashes = $vtdata | select Hash
+	$rawlist = Import-Csv $list
+	$refinedlist = @()
+	$listcounter=-1
+	for($count=0; $count -lt $rawlist.Length; $count++)
 	{
-		"DeviceName" {$counter++; $refinedlist[$counter] = @{'DeviceName' =$rawlist[$count][1]}; break}
-		"Event Items" {$refinedlist[$counter].Add("Events",@{}); break}
-		"Path" {$Eventitem =@{"Filepath" =$rawlist[$count][1]}; $count++; $Eventitem.Add("Hash", $rawlist[$count][1]); $count++; $refinedlist[$counter].Events.Add($Eventitem); break}
-	}
-}
-
-foreach($item in $refinedlist)
-{
-	$item.DeviceName | Out-File -FilePath $output -Append
-	foreach($subitem in $item.Events)
-	{
-		if($badhashes -contains $subitem.Hash)
+		switch($rawlist[$count].DataType)
 		{
-			$(","+$subitem.Filepath+","+$subitem.Hash) | Out-File -FilePath $output -Append
+			"DeviceName" {$listcounter++; $refinedlist+= @{"DeviceName" = $rawlist[$count].Value};break;}
+			"Path" {$refinedlist[$listcounter].Add("Path", $rawlist[$count].Value);break;}
+			"][" {$refinedlist[$listcounter].Add("Hash",$rawlist[$count].Value);$count++;break;}
 		}
 	}
+	foreach($item in $refinedlist)
+	{
+		$place = [array]::IndexOf($badhashes,$item.Hash)
+		$item.Add("VTPresent", $vtdata[$place].VTStatusCODE)
+		$item.Add("VTScore", $vtdata[$place].'VT Hits')
+		$item.Add("OTXHits", $vtdata[$place].'OTX hits')
+		$item.Add("VTLink", $vtdata[$place].'VT Link')		
+	}
+
+	$refinedlist | Export-Csv -Path $output
+	
 }
-}
-Normalprocess $prioritytarget $priorityoutput $inputtarget
-Normalprocess $inputtarget $outputtarget $inputtarget
-Normalprocess $suspectinput $suspectoutput $inputtarget
+
+
+Normalprocess -inp $prioritytarget -output $priorityoutput -list $inputtarget
+Normalprocess -inp $inputt -output $outputtarget -list $inputtarget
+Normalprocess -inp $suspectinput -output $suspectoutput -list $inputtarget

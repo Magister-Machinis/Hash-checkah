@@ -9,7 +9,13 @@ param (
 [string]$prioritytarget=".\priorityresults.csv",
 [string]$suspectoutput=".\suspectresults.csv"
 )
-
+$MyParam = $MyInvocation.MyCommand.Parameters
+foreach($item in $MyParam.Keys)
+{
+	New-Item (Get-Variable $item).Value -ItemType File -ErrorAction SilentlyContinue
+	(Get-Variable $item).Value = Resolve-Path (Get-Variable $item).Value 
+	Write-Host "Creating $((Get-Variable $item).Value)"
+}
 
 function vtcheck($hash)
 {

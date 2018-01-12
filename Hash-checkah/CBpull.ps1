@@ -6,7 +6,13 @@ param (
 [string]$outputtarget=".\refined.csv"
 
 )
-
+$MyParam = $MyInvocation.MyCommand.Parameters
+foreach($item in $MyParam.Keys)
+{
+	New-Item (Get-Variable $item).Value -ItemType File -ErrorAction SilentlyContinue
+	(Get-Variable $item).Value = Resolve-Path (Get-Variable $item).Value 
+	Write-Host "Creating $((Get-Variable $item).Value)"
+}
 
 function sleepbar($seconds)
 {
@@ -20,10 +26,7 @@ function sleepbar($seconds)
     Write-Progress -id 1 -Completed -activity "Sleeping: "
 }
 
-$source = resolve-path $source
-
-$outputtarget = resolve-path $outputtarget
-$("Raw Information") | Out-File -FilePath $outputtarget
+$("DataType, Value") | Out-File -FilePath $outputtarget
 
 $targetlist = Get-Content $source
 $targetlist = $targetlist | sort -unique -Descending
