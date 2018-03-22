@@ -34,7 +34,7 @@ function Normalprocess
 	$resultlist = @()
 	$clientlist = Import-Csv $inp
 	$OSINT = Import-Csv $list
-	$OSHASHES = 
+	
 	Write-Host "Gathering list of devices"
 	
 	$i = 0
@@ -60,6 +60,7 @@ function Normalprocess
 	for($count = 0; $count -lt $clientlist.Count; $count++)
 	{
 		
+		$i++
 		$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
 		$SecondsRemaining = ($SecondsElapsed / ($count / $clientlist.Count)) - $SecondsElapsed
 		Write-Progress -Activity "Processing Record $count of $($clientlist.Count)" -PercentComplete (($count/$($clientlist.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($count/$($clientlist.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
@@ -71,6 +72,28 @@ function Normalprocess
 	}
 	$hashandpath = $hashandpath | sort -Unique
 
+	Write-Host "Processing OSINT list"
+	$hashrep = @{}
+	$i = 0
+	$StartTime = Get-Date
+	foreach($item in $OSINT)
+	{
+		$i++
+		$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
+		$SecondsRemaining = ($SecondsElapsed / ($count / $OSINT.Count)) - $SecondsElapsed
+		Write-Progress -Activity "Processing Record $count of $($OSINT.Count)" -PercentComplete (($count/$($OSINT.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($count/$($OSINT.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
+		$hashrep.Add($item.Hash,$item.score)
+	}
+	$i = 0
+	foreach($item in $hashandpath)
+	{
+		$i++
+		$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
+		$SecondsRemaining = ($SecondsElapsed / ($count / $hashandpath.Count)) - $SecondsElapsed
+		Write-Progress -Activity "Processing Record $count of $($hashandpath.Count)" -PercentComplete (($count/$($hashandpath.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($count/$($hashandpath.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
+
+		$item.Add("Score",$hashrep[$item.Hash])
+	}
 
 
 

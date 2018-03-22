@@ -26,13 +26,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup />
   <ItemGroup>
     <Compile Include="CBpull.ps1" />
     <Compile Include="combiner.ps1" />
     <Compile Include="ControlWrapper.ps1" />
     <Compile Include="hashcheck.ps1" />
     <Compile Include="Sideitem.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="output\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />
