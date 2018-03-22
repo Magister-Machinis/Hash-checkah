@@ -240,3 +240,7 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+#general stuff
+**/Hash-checkah/alertid.txt
+**/Hash-checkah/*.csv

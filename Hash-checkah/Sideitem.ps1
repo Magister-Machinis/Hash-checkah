@@ -29,7 +29,7 @@ function sleepbar($seconds)
     Write-Progress -id 1 -Completed -activity "Sleeping: "
 }
 
-$("DataType|| Value") | Out-File -FilePath $outputtarget
+$("DataType `t Value") | Out-File -FilePath $outputtarget
 
 $targetlist = Get-Content $source
 $targetlist = $targetlist | sort -unique -Descending
@@ -78,9 +78,9 @@ foreach($target in $targetlist)
 	if($test -eq $true)
 	{
 		$test = $false
-		$("DeviceName||"+$response.deviceInfo.deviceName) | Out-File -FilePath $outputtarget -Append		
-		$("Summary||"+$response.threatInfo.summary) | Out-File -FilePath $outputtarget -Append
-		$("Descriptions||") | Out-File -FilePath $outputtarget -Append
+		$("DeviceName`t"+$response.deviceInfo.deviceName) | Out-File -FilePath $outputtarget -Append		
+		$("Summary`t"+$response.threatInfo.summary) | Out-File -FilePath $outputtarget -Append
+		$("Descriptions`t") | Out-File -FilePath $outputtarget -Append
 		foreach($item in $response.events)
 		{
 			foreach($subitem in $item.threatIndicators)
@@ -93,7 +93,7 @@ foreach($target in $targetlist)
 			}
 			if($test -eq $true)
 			{
-				$("||"+$item.longDescription) | Out-File -FilePath $outputtarget -Append
+				$("`t"+$item.longDescription) | Out-File -FilePath $outputtarget -Append
 			}
 		
 		}
