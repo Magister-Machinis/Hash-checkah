@@ -4,13 +4,13 @@
 param(
 [string]$initialinput =  ".\alertid.txt",
 [string]$stage1o = ".\refined.csv",
-[string]$stage2second = ".\ips.txt",
+[string]$stage2second = ".\hashes.txt",
 [string]$stage2target=".\results.csv",
 [string]$stage2prioritytarget=".\priorityresults.csv",
 [string]$stage2suspectoutput=".\suspectresults.csv",
-[string]$stage3outputtarget =".\report.csv",
-[string]$stage3priorityoutput = ".\priorityreport.csv",
-[string]$stage3suspectoutput=".\suspectreport.csv"
+[string]$stage3outputtarget =".\output\report.csv",
+[string]$stage3priorityoutput = ".\output\priorityreport.csv",
+[string]$stage3suspectoutput=".\output\suspectreport.csv"
 )
 
 $MyParam = $MyInvocation.MyCommand.Parameters

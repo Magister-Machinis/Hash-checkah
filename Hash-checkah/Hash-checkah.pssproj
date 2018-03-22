@@ -32,6 +32,7 @@
     <Compile Include="combiner.ps1" />
     <Compile Include="ControlWrapper.ps1" />
     <Compile Include="hashcheck.ps1" />
+    <Compile Include="Sideitem.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />

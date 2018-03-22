@@ -6,9 +6,9 @@ param(
 [string]$inputt = ".\results.csv",
 [string]$prioritytarget=".\priorityresults.csv",
 [string]$outputtarget=".\report.csv",
-[string]$priorityoutput=".\priorityreport.csv",
-[string]$suspectinput=".\suspectresults.csv",
-[string]$suspectoutput=".\suspectreport.csv"
+[string]$priorityoutput=".\output\priorityreport.csv",
+[string]$suspectinput=".\output\suspectresults.csv",
+[string]$suspectoutput=".\output\suspectreport.csv"
 )
 $MyParam = $MyInvocation.MyCommand.Parameters
 foreach($item in $MyParam.Keys)
@@ -31,31 +31,49 @@ function Normalprocess
 	[string]$list
 	)
 	Write-Host "Recombining $inp and $list into $output"
-	$vtdata = Import-Csv $inp 
-	$badhashes = $vtdata | select Hash
-	$rawlist = Import-Csv $list
-	$refinedlist = @()
-	$listcounter=-1
-	for($count=0; $count -lt $rawlist.Length; $count++)
+	$resultlist = @()
+	$clientlist = Import-Csv $inp
+	$OSINT = Import-Csv $list
+	$OSHASHES = 
+	Write-Host "Gathering list of devices"
+	
+	$i = 0
+	$StartTime = Get-Date
+	foreach($item in $clientlist)
 	{
-		switch($rawlist[$count].DataType)
+	$i++
+	$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
+    $SecondsRemaining = ($SecondsElapsed / ($i / $clientlist.Count)) - $SecondsElapsed
+    Write-Progress -Activity "Processing Record $i of $($clientlist.Count)" -PercentComplete (($i/$($clientlist.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($i/$($clientlist.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
+		if($item.DataType -eq "DeviceName")
 		{
-			"DeviceName" {$listcounter++; $refinedlist+= @{"DeviceName" = $rawlist[$count].Value};break;}
-			"Path" {$refinedlist[$listcounter].Add("Path", $rawlist[$count].Value);break;}
-			"][" {$refinedlist[$listcounter].Add("Hash",$rawlist[$count].Value);$count++;break;}
+			$resultlist += @{"DeviceName"=$item.Value}
 		}
 	}
-	foreach($item in $refinedlist)
-	{
-		$place = [array]::IndexOf($badhashes,$item.Hash)
-		$item.Add("VTPresent", $vtdata[$place].VTStatusCODE)
-		$item.Add("VTScore", $vtdata[$place].'VT Hits')
-		$item.Add("OTXHits", $vtdata[$place].'OTX hits')
-		$item.Add("VTLink", $vtdata[$place].'VT Link')		
-	}
 
-	$refinedlist | Export-Csv -Path $output
-	
+	$resultlist = $resultlist | sort -Unique
+
+	Write-Host "Gathering list of paths and hashes"
+	$hashandpath = @()
+	$i = 0
+	$StartTime = Get-Date
+	for($count = 0; $count -lt $clientlist.Count; $count++)
+	{
+		
+		$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
+		$SecondsRemaining = ($SecondsElapsed / ($count / $clientlist.Count)) - $SecondsElapsed
+		Write-Progress -Activity "Processing Record $count of $($clientlist.Count)" -PercentComplete (($count/$($clientlist.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($count/$($clientlist.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
+		
+		if($clientlist[$count].DataType -eq "Path")
+		{
+			$hashandpath += @{"Path"=$clientlist[$count].Value; "Hash" = $clientlist[$count+1].Value}
+		}
+	}
+	$hashandpath = $hashandpath | sort -Unique
+
+
+
+
 }
 
 

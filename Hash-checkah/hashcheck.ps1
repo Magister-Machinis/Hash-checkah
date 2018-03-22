@@ -4,7 +4,7 @@
 
 param (
 [string]$source=".\refined.csv",
-[string]$secondsource = ".\ips.txt",
+[string]$secondsource = ".\hashes.txt",
 [string]$outputtarget=".\results.csv",
 [string]$prioritytarget=".\priorityresults.csv",
 [string]$suspectoutput=".\suspectresults.csv"
@@ -55,7 +55,12 @@ function gatherer($target, $outputtarget, $prioritytarget, $suspectoutput)
 		#Write-Host "VT results are $vt"
 		$otx = otxcheck $target
 		#Write-Host "OTX results are $otx"
-		[string]$output =[string]([string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$vt.link +"," + [string]$otx.count)
+		[string]$output =[string]([string]([int]$vt.hits+[int]$otx.count)+","+[string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$vt.link +"," + [string]$otx.count+"," + [string]$otx.references)
+
+		if($vt.hits+$otx.count -gt 0)
+		{
+			$suspecttest = $true
+		}
 		
 		$checklist = @("Bkav","MicroWorld-eScan","nProtect","CMC","CAT-QuickHeal","McAfee","Malwarebytes","Zillya","AegisLab","CrowdStrike","K7GW","K7AntiVirus","TheHacker","Invincea","Baidu","F-Prot","Symantec","TotalDefense","Zoner","TrendMicro-HouseCall","Avast","ClamAV","GData","Kaspersky","BitDefender","NANO-Antivirus","ViRobot","Rising","Ad-Aware","Sophos","Comodo","F-Secure","DrWeb","VIPRE","TrendMicro","McAfee-GW-Edition","Emsisoft","SentinelOne","Cyren","Jiangmin","Webroot","Avira","Antiy-AVL","Kingsoft","Endgame","SUPERAntiSpyware","ZoneAlarm","Microsoft","AhnLab-V3","ALYac","AVware","MAX","VBA32","Cylance","WhiteArmor","Panda","Arcabit","ESET-NOD32","Tencent","Yandex","Ikarus","Fortinet","AVG","Paloalto","Qihoo-360","Ad-Aware","AegisLab","AhnLab-V3","ALYac","Arcabit","Avast","AVG","Avira (no cloud)","AVware","Baidu","BitDefender","CAT-QuickHeal","ClamAV","CrowdStrike Falcon (ML)","Cybereason","Cylance","Cyren","eGambit","Emsisoft","Endgame","ESET-NOD32","F-Secure","Fortinet","GData","Ikarus","Sophos ML","K7AntiVirus","K7GW","Kaspersky","Malwarebytes","MAX","McAfee","McAfee-GW-Edition","Microsoft","eScan","NANO-Antivirus","Palo Alto Networks (Known Signatures)","Panda","Qihoo-360","Rising","SentinelOne (Static ML)","Sophos AV","Symantec","Tencent","TrendMicro","TrendMicro-HouseCall","VBA32","VIPRE","ViRobot","Webroot","Zillya","ZoneAlarm by Check Point","Alibaba","Avast-Mobile","Bkav","CMC","Comodo","DrWeb","F-Prot","Jiangmin","Kingsoft","nProtect","SUPERAntiSpyware","Symantec Mobile Insight","TheHacker","TotalDefense","Trustlook","WhiteArmor","Yandex","Zoner")
 		$checklist = $checklist | sort -Unique
@@ -66,7 +71,7 @@ function gatherer($target, $outputtarget, $prioritytarget, $suspectoutput)
 			$($checklist[$count])
 			$ptarget = $vt.scans.$($checklist[$count])
 			$ptarget
-			[string]$output += ","+$ptarget.detected+","+$ptarget.result
+			[string]$output += (("|"+$ptarget.result) -replace("\|\|","")) 
 			if($ptarget.detected -eq $true)
 			{
 				Write-Host "Suspect item found"
@@ -84,14 +89,13 @@ function gatherer($target, $outputtarget, $prioritytarget, $suspectoutput)
 		{
 			$output | Out-File -FilePath $prioritytarget -Append
 		}
-		elseif($suspecttest -eq $true)
+		if($suspecttest -eq $true)
 		{
 			$output | Out-File -FilePath $suspectoutput -Append
 		}
-		else
-		{
+		
 			$output | Out-File -FilePath $outputtarget -Append
-		}
+		
 
 }
 
@@ -106,7 +110,7 @@ $secondsource
 $outputtarget
 $prioritytarget
 $suspectoutput
-$initial = "VTStatusCODE,Hash,VT Hits, VT Link, OTX hits"
+$initial = "Score,VTStatusCODE,Hash,VT Hits,VT Referrence,OTX hits,OTX Referrence,VT Matches"
 $initial | Out-File -filepath $outputtarget 
 $initial | Out-File -filepath $prioritytarget 
 $initial | Out-File -filepath $suspectoutput
@@ -127,11 +131,17 @@ $dcount = 0
 $size = $targetlist.Length
 $numcount = 0
 
+$i = 0
+$StartTime = Get-Date
 foreach($target in $targetlist)
 {
+	
+
+	$i++
 	$numcount++
-	$percent = ($numcount/$size)*100
-	Write-Progress -id 2 -Activity "Progress: $percent %" -Status "$numcount of $size complete" -PercentComplete $percent
+	$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
+    $SecondsRemaining = ($SecondsElapsed / ($i / $targetlist.Count)) - $SecondsElapsed
+    Write-Progress -Activity "Processing Record $i of $($targetlist.Count)" -PercentComplete (($i/$($targetlist.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($i/$($targetlist.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
 	
 	
 		

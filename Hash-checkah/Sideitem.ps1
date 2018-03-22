@@ -1,11 +1,14 @@
 #
-# CBpull.ps1
+# Sideitem.ps1
 #
+
 param (
 [string]$source=".\alertid.txt",
-[string]$outputtarget=".\refined.csv"
+[string]$outputtarget=".\QueryResults.csv"
 
 )
+
+$SearchItem = "PUP"
 $MyParam = $MyInvocation.MyCommand.Parameters
 foreach($item in $MyParam.Keys)
 {
@@ -26,7 +29,7 @@ function sleepbar($seconds)
     Write-Progress -id 1 -Completed -activity "Sleeping: "
 }
 
-$("DataType, Value") | Out-File -FilePath $outputtarget
+$("DataType|| Value") | Out-File -FilePath $outputtarget
 
 $targetlist = Get-Content $source
 $targetlist = $targetlist | sort -unique -Descending
@@ -58,17 +61,41 @@ foreach($target in $targetlist)
 	$tempurl
 	
 	$response = Invoke-RestMethod -uri $tempurl -Header $param[($counter % $param.Count)] -Method GET
-	$response
-	$("DeviceName,"+$response.deviceInfo.deviceName) | Out-File -FilePath $outputtarget -Append
-	$("AlertID,"+$target) | Out-File -FilePath $outputtarget -Append
-	$("Summary,"+$response.threatInfo.summary) | Out-File -FilePath $outputtarget -Append
-	$("Event Items") | Out-File -FilePath $outputtarget -Append
-	foreach($item in $response.events)
+	#$response
+	$test = $false
+	foreach($item in $response.threatInfo.indicators)
 	{
-		$("Path,"+$item.applicationPath) | Out-File -FilePath $outputtarget -Append
-		$("][,"+$item.processHash) | Out-File -FilePath $outputtarget -Append
-		$("][,"+$item.parentHash) | Out-File -FilePath $outputtarget -Append
+		foreach($subitem in $item)
+		{
+			$subitem
+			if($subitem -imatch $SearchItem)
+			{
+				
+				$test = $true
+			}
+		}
 	}
-	
-
-}
+	if($test -eq $true)
+	{
+		$test = $false
+		$("DeviceName||"+$response.deviceInfo.deviceName) | Out-File -FilePath $outputtarget -Append		
+		$("Summary||"+$response.threatInfo.summary) | Out-File -FilePath $outputtarget -Append
+		$("Descriptions||") | Out-File -FilePath $outputtarget -Append
+		foreach($item in $response.events)
+		{
+			foreach($subitem in $item.threatIndicators)
+			{
+				if($subitem -imatch $SearchItem)
+				{
+				
+					$test = $true
+				}
+			}
+			if($test -eq $true)
+			{
+				$("||"+$item.longDescription) | Out-File -FilePath $outputtarget -Append
+			}
+		
+		}
+	}
+	}
