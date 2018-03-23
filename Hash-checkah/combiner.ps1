@@ -23,6 +23,9 @@ $('DeviceName,Filepath,Hash')| Out-File -FilePath $outputtarget
 $('DeviceName,Filepath,Hash')| Out-File -FilePath $priorityoutput
 $('DeviceName,Filepath,Hash')| Out-File -FilePath $suspectoutput
 
+
+
+
 function Normalprocess
 {
 	param(
@@ -31,12 +34,14 @@ function Normalprocess
 	[string]$list
 	)
 	Write-Host "Recombining $inp and $list into $output"
-	$resultlist = @()
+
+	
 	$clientlist = Import-Csv $inp
 	$OSINT = Import-Csv $list
 	
 	Write-Host "Gathering list of devices"
 	
+	$resultlist = @{} #table of devices keyed by devicename
 	$i = 0
 	$StartTime = Get-Date
 	foreach($item in $clientlist)
@@ -47,14 +52,18 @@ function Normalprocess
     Write-Progress -Activity "Processing Record $i of $($clientlist.Count)" -PercentComplete (($i/$($clientlist.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($i/$($clientlist.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
 		if($item.DataType -eq "DeviceName")
 		{
-			$resultlist += @{"DeviceName"=$item.Value}
+			if($resultlist.ContainsKey($item.Value) -eq $false)
+			{
+				$resultlist.Add($item.Value, @{"DeviceName"=$item.Value; "Paths"=@()})			
+			}
 		}
 	}
 
-	$resultlist = $resultlist | sort -Unique
+	
 
 	Write-Host "Gathering list of paths and hashes"
-	$hashandpath = @()
+	$hashandpath = @{} #hash/paths keyed by path
+	$pathandhash = @{} #hash/paths keyed by hash
 	$i = 0
 	$StartTime = Get-Date
 	for($count = 0; $count -lt $clientlist.Count; $count++)
@@ -67,13 +76,17 @@ function Normalprocess
 		
 		if($clientlist[$count].DataType -eq "Path")
 		{
-			$hashandpath += @{"Path"=$clientlist[$count].Value; "Hash" = $clientlist[$count+1].Value}
+			if($hashandpath.ContainsKey($clientlist[$count].Value))
+			{
+				$hashandpath.Add($clientlist[$count].Value, @{"Path"=$clientlist[$count].Value; "Hash" = $clientlist[$count+1].Value})
+				$pathandhash.Add($clientlist[$count+1].Value, @{"Path"=$clientlist[$count+1].Value; "Hash" = $clientlist[$count+1].Value})
+			}
 		}
 	}
-	$hashandpath = $hashandpath | sort -Unique
+	
 
 	Write-Host "Processing OSINT list"
-	$hashrep = @{}
+	$hashrep = @{} #hash scores keyed by hash
 	$i = 0
 	$StartTime = Get-Date
 	foreach($item in $OSINT)
@@ -84,18 +97,11 @@ function Normalprocess
 		Write-Progress -Activity "Processing Record $count of $($OSINT.Count)" -PercentComplete (($count/$($OSINT.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($count/$($OSINT.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
 		$hashrep.Add($item.Hash,$item.score)
 	}
-	$i = 0
-	foreach($item in $hashandpath)
-	{
-		$i++
-		$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
-		$SecondsRemaining = ($SecondsElapsed / ($count / $hashandpath.Count)) - $SecondsElapsed
-		Write-Progress -Activity "Processing Record $count of $($hashandpath.Count)" -PercentComplete (($count/$($hashandpath.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($count/$($hashandpath.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
+	
 
-		$item.Add("Score",$hashrep[$item.Hash])
-	}
+	Write-Host "Correlating Report"
 
-
+	
 
 }
 
