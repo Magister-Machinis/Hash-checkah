@@ -29,7 +29,7 @@ function vtcheck($hash)
 
 function otxcheck($hash)
 {
-	$param = @{'X-OTX-API-KEY' = '0690e2eb9a3296b0933e1073047be755a13955d6a7ec64149119ecf6960698c6'}
+	$param = @{'X-OTX-API-KEY' = ''}
 	$url = 'https://otx.alienvault.com/api/v1/indicators/file/' + $hash + '/general'
 	$response = Invoke-RestMethod -Uri $url -Body $param -Method GET
 	return $response.pulse_info
