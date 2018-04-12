@@ -19,7 +19,7 @@ foreach($item in $MyParam.Keys)
 
 function vtcheck($hash)
 {
-	$param = @{'apikey' = 'a397bb0bbc39b53f67e57514432281c57beb53c96182292108510aa08b5fe934'; 'resource' = $hash}
+	$param = @{'apikey' = ''; 'resource' = $hash}
 	$response = Invoke-RestMethod -Uri 'https://www.virustotal.com/vtapi/v2/file/report' -Body $param -Method Get
 	$info = @{'hits' = $response.positives; 'link' = $response.permalink; 'status'= $response.response_code; 'scans' = $response.scans}
 	return $info
