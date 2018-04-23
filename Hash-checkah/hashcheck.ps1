@@ -20,7 +20,7 @@ foreach($item in $MyParam.Keys)
 
 function vtcheck($hash)
 {
-	$param = @{'apikey' = 'a397bb0bbc39b53f67e57514432281c57beb53c96182292108510aa08b5fe934'; 'resource' = $hash}
+	$param = @{'apikey' = ''; 'resource' = $hash}
 	$response = Invoke-RestMethod -Uri 'https://www.virustotal.com/vtapi/v2/file/report' -Body $param -Method Get
 	$info = @{'hits' = $response.positives; 'link' = $response.permalink; 'status'= $response.response_code; 'scans' = $response.scans}
 	return $info
@@ -30,7 +30,7 @@ function vtcheck($hash)
 
 function otxcheck($hash)
 {
-	$param = @{'X-OTX-API-KEY' = '0690e2eb9a3296b0933e1073047be755a13955d6a7ec64149119ecf6960698c6'}
+	$param = @{'X-OTX-API-KEY' = ''}
 	$url = 'https://otx.alienvault.com/api/v1/indicators/file/' + $hash + '/general'
 	$response = Invoke-RestMethod -Uri $url -Body $param -Method GET
 	return $response.pulse_info
