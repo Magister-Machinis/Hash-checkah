@@ -2,6 +2,7 @@
 # CBpull.ps1
 #
 param (
+[string]$configfile=".\config.csv",
 [string]$source=".\alertid.txt",
 [string]$outputtarget=".\refined.csv"
 

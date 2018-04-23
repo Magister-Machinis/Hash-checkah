@@ -2,6 +2,7 @@
 # combiner.ps1
 #
 param(
+[string]$configfile=".\config.csv",
 [string]$inputtarget=".\refined.csv",
 [string]$inputt = ".\results.csv",
 [string]$prioritytarget=".\priorityresults.csv",

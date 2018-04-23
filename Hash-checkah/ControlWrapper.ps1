@@ -2,6 +2,7 @@
 # ControlWrapper.ps1
 #
 param(
+[string]$configfile=".\config.csv",
 [string]$initialinput =  ".\alertid.txt",
 [string]$stage1o = ".\refined.csv",
 [string]$stage2second = ".\hashes.txt",
@@ -23,11 +24,11 @@ foreach($item in $MyParam.Keys)
 
 $start = get-date
 Write-Host "Pulling Alerts"
-& ".\CBpull.ps1" -source $initialinput -outputtarget $stage1o
+& ".\CBpull.ps1" -configfile $configfile -source $initialinput -outputtarget $stage1o
 Write-Host "Checking Hashes"
-& ".\hashcheck.ps1" -source $stage1o -secondsource $stage2second -outputtarget $stage2target -prioritytarget $stage2prioritytarget -suspectoutput $stage2suspectoutput
+& ".\hashcheck.ps1" -configfile $configfile -source $stage1o -secondsource $stage2second -outputtarget $stage2target -prioritytarget $stage2prioritytarget -suspectoutput $stage2suspectoutput
 Write-Host "Generating Reports"
-& ".\combiner.ps1" -inputtarget $initialinput -prioritytarget $stage2prioritytarget -outputtarget $stage3outputtarget -priorityoutput $stage3priorityoutput -suspectinput $stage2suspectoutput -suspectoutput $stage3suspectoutput
+& ".\combiner.ps1" -configfile $configfile -inputtarget $initialinput -prioritytarget $stage2prioritytarget -outputtarget $stage3outputtarget -priorityoutput $stage3priorityoutput -suspectinput $stage2suspectoutput -suspectoutput $stage3suspectoutput
 $end = get-date
 $times= $end - $start
 write-host "Time taken:"

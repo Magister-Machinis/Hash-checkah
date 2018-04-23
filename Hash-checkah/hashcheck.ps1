@@ -3,6 +3,7 @@
 #
 
 param (
+[string]$configfile=".\config.csv",
 [string]$source=".\refined.csv",
 [string]$secondsource = ".\hashes.txt",
 [string]$outputtarget=".\results.csv",

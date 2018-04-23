@@ -3,12 +3,12 @@
 #
 
 param (
+[string]$configfile=".\config.csv",
 [string]$source=".\alertid.txt",
-[string]$outputtarget=".\QueryResults.csv"
+[string]$outputtarget=".\QueryResults.csv",
+[string]$hashoutput =".\ExtractedHashes.csv"
 
 )
-
-$SearchItem = "PUP","MALWARE"
 $MyParam = $MyInvocation.MyCommand.Parameters
 foreach($item in $MyParam.Keys)
 {
@@ -17,6 +17,24 @@ foreach($item in $MyParam.Keys)
 	Write-Host "Creating $((Get-Variable $item).Value)"
 }
 
+
+function ingestconfig($conf)
+{
+	$conffile = Import-Csv -Path $conf
+	
+	$searchparam = @()
+	$keys = @()
+	foreach($item in $conffile)
+	{
+		switch ($item.Type )
+		{
+			CBKey {$keys.Add($item.Data)}
+			CBSearch {$searchparam.Add('X-AUTH-TOKEN',$item.Data)}
+		}
+	}
+	
+	return $searchparam,$keys
+}
 function sleepbar($seconds)
 {
     
@@ -29,12 +47,19 @@ function sleepbar($seconds)
     Write-Progress -id 1 -Completed -activity "Sleeping: "
 }
 
+
+
+$SearchItem,$param = ingestconfig $configfile
+
+
+
 $("DataType `t Value") | Out-File -FilePath $outputtarget
+$("Hashs") | Out-File -FilePath $hashoutput
 
 $targetlist = Get-Content $source
 $targetlist = $targetlist | sort -unique -Descending
 $url = 'https://api-prod05.conferdeploy.net/integrationServices/v3/alert/'
-$param = @{'X-AUTH-TOKEN' = 'YFUH2YVRZPZ12AJZZC7GYMAC/SK8AKCG43K'}, @{'X-AUTH-TOKEN' = 'NM967QJCPA3FDY47M6AS91K7/NY2HI8H4IG'}, @{'X-AUTH-TOKEN' = 'DR1R8MKQS1MHC9HZNCN4SGYJ/S5HFZC1NEN'}, @{'X-AUTH-TOKEN' = 'CHIZRBBZZTB3I8943RAQW2JM/RJKFQV8A6C'}, @{'X-AUTH-TOKEN' = '5TNBFBC1CGAWAV9G2FD3EW1Z/ZJSLRAQEHU'}, @{'X-AUTH-TOKEN' = 'FV33ZIP96TKI4AQ34V61YQE4/NYR3GVIG2R'}, @{'X-AUTH-TOKEN' = 'R8QZP6LNVUBNPN1IMBAAP2E2/NIHABAA7VW'}, @{'X-AUTH-TOKEN' = 'WJF5EGAV7HR9RQZFHZZDT2ZW/4MHL77PARJ'},@{'X-AUTH-TOKEN' = 'WS8SS476ILEWT33Q37ZM2FPI/3Z1EFP82MT'},@{'X-AUTH-TOKEN' = 'MLRU3FG5WRPRNEUNVUA2N1T3/3GZ51DJ5WZ'}
+
 $count = 0
 $count = 0
 $counter =0
@@ -99,8 +124,14 @@ foreach($target in $targetlist)
 			if($test -eq $true)
 			{
 				$(("`t"+$item.longDescription) -replace('"<share><[a-zA-Z0-9"= ]+>',"")) -replace('<\/link>.+>"',"") | Out-File -FilePath $outputtarget -Append
+				$($item.longDescription) -match '=".+">'
+								
+				 $($matches[0] -replace '="',"") -replace '">',""| Out-File -FilePath $hashoutput -Append
 			}
 		
 		}
 	}
-	}
+}
+
+$sifter = Import-Csv -Delimiter "`t"  $hashoutput | sort Hashs -Unique
+$sifter| Export-Csv -Delimiter "`t" $hashoutput
