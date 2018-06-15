@@ -244,3 +244,6 @@ ModelManifest.xml
 #general stuff
 **/Hash-checkah/alertid.txt
 **/Hash-checkah/*.csv
+/Hash-checkah/reports
+/Hash-checkah/seemsharmless.txt
+/Hash-checkah/hashes.txt

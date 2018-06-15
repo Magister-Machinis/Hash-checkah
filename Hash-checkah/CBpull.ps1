@@ -8,6 +8,7 @@ param (
 
 )
 $MyParam = $MyInvocation.MyCommand.Parameters
+
 foreach($item in $MyParam.Keys)
 {
 	New-Item (Get-Variable $item).Value -ItemType File -ErrorAction SilentlyContinue
@@ -15,6 +16,7 @@ foreach($item in $MyParam.Keys)
 	Write-Host "Creating $((Get-Variable $item).Value)"
 }
 
+$auth = Import-Csv -Path $configfile
 function sleepbar($seconds)
 {
     
@@ -32,7 +34,11 @@ $("DataType, Value") | Out-File -FilePath $outputtarget
 $targetlist = Get-Content $source
 $targetlist = $targetlist | sort -unique -Descending
 $url = 'https://api-prod05.conferdeploy.net/integrationServices/v3/alert/'
-$param = @{}
+$param = @()
+foreach($item in $auth.cblist)
+{
+	$param +=@{'X-AUTH-TOKEN'=$item}
+}
 $count = 0
 $count = 0
 $counter =0

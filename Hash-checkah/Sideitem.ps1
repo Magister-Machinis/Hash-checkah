@@ -28,8 +28,8 @@ function ingestconfig($conf)
 	{
 		switch ($item.Type )
 		{
-			CBKey {$keys.Add($item.Data)}
-			CBSearch {$searchparam.Add('X-AUTH-TOKEN',$item.Data)}
+			CBKey {$keys.Add(@{'X-AUTH-TOKEN'=$item.Data})}
+			CBSearch {$searchparam.Add($item.Data)}
 		}
 	}
 	
@@ -135,3 +135,4 @@ foreach($target in $targetlist)
 
 $sifter = Import-Csv -Delimiter "`t"  $hashoutput | sort Hashs -Unique
 $sifter| Export-Csv -Delimiter "`t" $hashoutput
+
