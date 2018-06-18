@@ -79,8 +79,7 @@ $auth
 			Write-Host $(($vt.scans).Length)
 			for([int]$count =0; $count -lt [int]$checklist.Length; [int]$count+=1)
 			{
-				Write-Host "Checking "
-				$($checklist[$count])
+				
 				$ptarget = $vt.scans.$($checklist[$count])
 			
 				if(!([string]::IsNullOrEmpty($ptarget.result) -or [string]::IsNullOrWhiteSpace($ptarget.result)))
