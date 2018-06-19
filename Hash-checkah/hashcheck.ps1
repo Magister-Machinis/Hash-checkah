@@ -67,12 +67,8 @@ $auth
 			#Write-Host "VT results are $vt"
 			$otx = otxcheck $target $auth
 			#Write-Host "OTX results are $otx"
-			[string]$output =[string]([string]([int]$vt.hits+[int]$otx.count)+","+[string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$vt.link +"," + [string]$otx.count+"," + [string]$otx.references +",")
+			[string]$output =[string]([string]([int]$vt.hits+[int]$otx.count)+","+[string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$vt.link +"," + [string]$otx.count+"," )
 
-			if($vt.hits+$otx.count -gt 0)
-			{
-				$suspecttest = $true
-			}
 		
 			$checklist = @("Bkav","MicroWorld-eScan","nProtect","CMC","CAT-QuickHeal","McAfee","Malwarebytes","Zillya","AegisLab","CrowdStrike","K7GW","K7AntiVirus","TheHacker","Invincea","Baidu","F-Prot","Symantec","TotalDefense","Zoner","TrendMicro-HouseCall","Avast","ClamAV","GData","Kaspersky","BitDefender","NANO-Antivirus","ViRobot","Rising","Ad-Aware","Sophos","Comodo","F-Secure","DrWeb","VIPRE","TrendMicro","McAfee-GW-Edition","Emsisoft","SentinelOne","Cyren","Jiangmin","Webroot","Avira","Antiy-AVL","Kingsoft","Endgame","SUPERAntiSpyware","ZoneAlarm","Microsoft","AhnLab-V3","ALYac","AVware","MAX","VBA32","Cylance","WhiteArmor","Panda","Arcabit","ESET-NOD32","Tencent","Yandex","Ikarus","Fortinet","AVG","Paloalto","Qihoo-360","Ad-Aware","AegisLab","AhnLab-V3","ALYac","Arcabit","Avast","AVG","Avira (no cloud)","AVware","Baidu","BitDefender","CAT-QuickHeal","ClamAV","CrowdStrike Falcon (ML)","Cybereason","Cylance","Cyren","eGambit","Emsisoft","Endgame","ESET-NOD32","F-Secure","Fortinet","GData","Ikarus","Sophos ML","K7AntiVirus","K7GW","Kaspersky","Malwarebytes","MAX","McAfee","McAfee-GW-Edition","Microsoft","eScan","NANO-Antivirus","Palo Alto Networks (Known Signatures)","Panda","Qihoo-360","Rising","SentinelOne (Static ML)","Sophos AV","Symantec","Tencent","TrendMicro","TrendMicro-HouseCall","VBA32","VIPRE","ViRobot","Webroot","Zillya","ZoneAlarm by Check Point","Alibaba","Avast-Mobile","Bkav","CMC","Comodo","DrWeb","F-Prot","Jiangmin","Kingsoft","nProtect","SUPERAntiSpyware","Symantec Mobile Insight","TheHacker","TotalDefense","Trustlook","WhiteArmor","Yandex","Zoner")
 			$checklist = $checklist | sort -Unique
@@ -86,7 +82,7 @@ $auth
 				{
 					[string]$output += ("|"+$ptarget.result)
 				}
-				if($ptarget.detected -eq $true)
+				if($([int]$vt.hits+[int]$otx.count) -ne 0)
 				{
 					Write-Host "Suspect item found"
 					$suspecttest = $true
@@ -97,13 +93,14 @@ $auth
 					$test = $true
 				}
 			}
-			return @{'output'=$output;'priority'=$test;'suspect'=$suspectest;'hash'=$target}
+			return @{'output'=$output;'priority'=$test;'suspect'=$suspecttest;'hash'=$target}
 		
 			
 		
 
 	}
-	return gatherer $target $auth
+	$temp = gatherer $target $auth
+	return $temp
 }
 
 
@@ -113,7 +110,7 @@ $secondsource
 $outputtarget
 $prioritytarget
 $suspectoutput
-$initial = "Score,VTStatusCODE,Hash,VT Hits,VT Referrence,OTX hits,OTX Referrence,VT Matches"
+$initial = "Score,VTStatusCODE,Hash,VT Hits,VT Referrence,OTX hits,VT Matches"
 $initial | Out-File -filepath $outputtarget 
 $initial | Out-File -filepath $prioritytarget 
 $initial | Out-File -filepath $suspectoutput
