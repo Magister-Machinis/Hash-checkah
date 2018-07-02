@@ -1,4 +1,4 @@
-﻿#
+#
 # Script.ps1
 #
 
@@ -67,7 +67,7 @@ $auth
 			#Write-Host "VT results are $vt"
 			$otx = otxcheck $target $auth
 			#Write-Host "OTX results are $otx"
-			[string]$output =[string]([string]([int]$vt.hits+[int]$otx.count)+","+[string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$vt.link +"," + [string]$otx.count+"," )
+			[string]$output =[string]([string]([int]$vt.hits+[int]$otx.count)+","+[string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$otx.count+"," )
 
 		
 			$checklist = @("Bkav","MicroWorld-eScan","nProtect","CMC","CAT-QuickHeal","McAfee","Malwarebytes","Zillya","AegisLab","CrowdStrike","K7GW","K7AntiVirus","TheHacker","Invincea","Baidu","F-Prot","Symantec","TotalDefense","Zoner","TrendMicro-HouseCall","Avast","ClamAV","GData","Kaspersky","BitDefender","NANO-Antivirus","ViRobot","Rising","Ad-Aware","Sophos","Comodo","F-Secure","DrWeb","VIPRE","TrendMicro","McAfee-GW-Edition","Emsisoft","SentinelOne","Cyren","Jiangmin","Webroot","Avira","Antiy-AVL","Kingsoft","Endgame","SUPERAntiSpyware","ZoneAlarm","Microsoft","AhnLab-V3","ALYac","AVware","MAX","VBA32","Cylance","WhiteArmor","Panda","Arcabit","ESET-NOD32","Tencent","Yandex","Ikarus","Fortinet","AVG","Paloalto","Qihoo-360","Ad-Aware","AegisLab","AhnLab-V3","ALYac","Arcabit","Avast","AVG","Avira (no cloud)","AVware","Baidu","BitDefender","CAT-QuickHeal","ClamAV","CrowdStrike Falcon (ML)","Cybereason","Cylance","Cyren","eGambit","Emsisoft","Endgame","ESET-NOD32","F-Secure","Fortinet","GData","Ikarus","Sophos ML","K7AntiVirus","K7GW","Kaspersky","Malwarebytes","MAX","McAfee","McAfee-GW-Edition","Microsoft","eScan","NANO-Antivirus","Palo Alto Networks (Known Signatures)","Panda","Qihoo-360","Rising","SentinelOne (Static ML)","Sophos AV","Symantec","Tencent","TrendMicro","TrendMicro-HouseCall","VBA32","VIPRE","ViRobot","Webroot","Zillya","ZoneAlarm by Check Point","Alibaba","Avast-Mobile","Bkav","CMC","Comodo","DrWeb","F-Prot","Jiangmin","Kingsoft","nProtect","SUPERAntiSpyware","Symantec Mobile Insight","TheHacker","TotalDefense","Trustlook","WhiteArmor","Yandex","Zoner")
@@ -87,7 +87,7 @@ $auth
 					Write-Host "Suspect item found"
 					$suspecttest = $true
 				}
-				if($ptarget.result -imatch "emotet" -or $ptarget.result -imatch "qakbot" -or $ptarget.result -imatch "qbot" -or $ptarget.result -imatch "emo")
+				if($ptarget.result -imatch "emotet" -or $ptarget.result -imatch "qakbot" -or $ptarget.result -imatch "qbot" -or $ptarget.result -imatch "emo" -or $ptarget.result -imatch "panda" -or $ptarget.result -imatch "296387")
 				{
 					Write-Host "Potential hit found"
 					$test = $true
@@ -110,7 +110,7 @@ $secondsource
 $outputtarget
 $prioritytarget
 $suspectoutput
-$initial = "Score,VTStatusCODE,Hash,VT Hits,VT Referrence,OTX hits,VT Matches"
+$initial = "Score,VTStatusCODE,Hash,VT Hits,OTX hits,VT Matches"
 $initial | Out-File -filepath $outputtarget 
 $initial | Out-File -filepath $prioritytarget 
 $initial | Out-File -filepath $suspectoutput
@@ -125,7 +125,8 @@ foreach($item in $targetlist)
 }
 $targetlist=($refinedlist + $secondlist) | sort -Descending -Unique
 
-$targetlist
+$targetlist.count
+$knowngoods.count
 $mcount = 0
 $dcount = 0
 
@@ -140,14 +141,16 @@ $i = 0
 $StartTime = Get-Date
 foreach($target in $targetlist)
 {
-	if(!($knowngoods.Contains($target)))
-	{
-
 	$i++
-	$numcount++
 	$SecondsElapsed = ((Get-Date) - $StartTime).TotalSeconds
     $SecondsRemaining = ($SecondsElapsed / ($i / $targetlist.Count)) - $SecondsElapsed
     Write-Progress -Activity "Processing Record $i of $($targetlist.Count)" -PercentComplete (($i/$($targetlist.Count)) * 100) -CurrentOperation "$("{0:N2}" -f ((($i/$($targetlist.Count)) * 100),2))% Complete" -SecondsRemaining $SecondsRemaining
+	if(!($knowngoods.Contains($target)))
+	{
+
+	
+	$numcount++
+	
 	
 	
 		
@@ -168,10 +171,11 @@ foreach($target in $targetlist)
 		}
 
 		$job=[powershell]::Create().AddScript($funbits).AddArgument($target).AddArgument($auth)
-	$job.RunspacePool = $runspacepool
-	$jobs += New-Object PSObject -Property @{
-		Pipe = $job
-		Result = $job.BeginInvoke()}	
+		$job.RunspacePool = $runspacepool
+		$jobs += New-Object PSObject -Property @{
+			Pipe = $job
+			Result = $job.BeginInvoke()
+		}	
 		}
 }
 
@@ -192,21 +196,19 @@ foreach($job in $jobs)
 
 	
 	$temp= $job.Pipe.EndInvoke($job.Result)
-	if(($temp.priority -eq $true)-or($temp.suspect -eq $true) )
+	
+	if($temp.priority -eq $true)
 	{
-		if($temp.priority -eq $true)
-		{
-			$temp.output | Out-File -FilePath $prioritytarget -Append
-		}
-		if($temp.suspect -eq $true)
-		{
-			$temp.output | Out-File -FilePath $suspectoutput -Append
-		}
+		$temp.output | Out-File -FilePath $prioritytarget -Append
+	}
+	elseif($temp.suspect -eq $true)
+	{
+		$temp.output | Out-File -FilePath $suspectoutput -Append
 	}
 	else
 	{
 		$temp.output | out-file -FilePath $outputtarget -Append
-		$knowngoods += $temp.output.hash
+		$knowngoods += $temp.hash
 	}
 	$knowngoods | sort -Unique | Out-File -FilePath $knowngoodsalpha
 }
