@@ -15,6 +15,19 @@ foreach($item in $MyParam.Keys)
 	Write-Host "Creating $((Get-Variable $item).Value)"
 }
 $auth= import-csv -Path $configfile
+Remove-item $prioritytarget
+Remove-item $suspectoutput
+function sleepbar($seconds)
+	{
+    
+		for($count = 0; $count -lt $seconds; $count++)
+		{
+			$percent = ($count / $seconds) * 100
+			write-progress -id 1 -activity "Sleeping: " -status "=][=  $count" -percentcomplete $percent -secondsremaining ($seconds - $count)
+			start-sleep -s 1
+		}
+		Write-Progress -id 1 -Completed -activity "Resuming: "
+	}
 [scriptblock]$eventingress ={
 	param(
 	[int]$rowcount,
@@ -66,7 +79,7 @@ do{
 	if($counter -eq 24)
 	{
 		Write-Host "throttling call rate"
-		Start-Sleep -Seconds 300
+		sleepbar 300
 		$counter =0
 	}
 
@@ -78,7 +91,7 @@ do{
 		}  
 
 	$counter+=1
-	$rowcount+=5000
+	$rowcount+=1500
 	$rowcount
 	
 }while($rowcount -le 100000)
@@ -126,8 +139,8 @@ if(!(Test-Path -Path $worklocation))
 }
 $todayr= Import-Csv $prioritytarget
 $filename = [string]((("priority"+(get-date).tostring() + ".csv") -replace"/","") -replace " ","") -replace ":",""
-$todayr | Export-Csv -Delimiter "`t" -Path $(Join-Path -Path $worklocation -ChildPath $filename) -NoTypeInformation
+$todayr | Export-Csv -Path $(Join-Path -Path $worklocation -ChildPath $filename) -NoTypeInformation
 
 $todayr= Import-Csv $suspectoutput
 $filename = [string]((("suspect"+(get-date).tostring() + ".csv") -replace"/","") -replace " ","") -replace ":",""
-$todayr | Export-Csv -Delimiter "`t" -Path $(Join-Path -Path $worklocation -ChildPath $filename) -NoTypeInformation
+$todayr | Export-Csv -Path $(Join-Path -Path $worklocation -ChildPath $filename) -NoTypeInformation
