@@ -44,6 +44,10 @@ $auth
 		$param = @{'apikey' = $auth.vt; 'resource' = $hash}
 		$response = Invoke-RestMethod -Uri 'https://www.virustotal.com/vtapi/v2/file/report' -Body $param -Method Get
 		$info = @{'hits' = $response.positives; 'link' = $response.permalink; 'status'= $response.response_code; 'scans' = $response.scans}
+		if($null -eq ($response | ConvertFrom-Json))
+		{
+			$info.status = 9999
+		}
 		return $info
 	
 	
@@ -64,36 +68,44 @@ $auth
 			$suspecttest = $false
 			Write-Host "Checking $target"
 			$vt = vtcheck $target $auth
-			#Write-Host "VT results are $vt"
-			$otx = otxcheck $target $auth
-			#Write-Host "OTX results are $otx"
-			[string]$output =[string]([string]([int]$vt.hits+[int]$otx.count)+","+[string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$otx.count+"," )
+			if($vt.status -ne 9999)
+				{
+				#Write-Host "VT results are $vt"
+				$otx = otxcheck $target $auth
+				#Write-Host "OTX results are $otx"
+				[string]$output =[string]([string]([int]$vt.hits+[int]$otx.count)+","+[string]$vt.status +","+ [string]$target + "," + [string]$vt.hits + "," + [string]$otx.count+"," )
 
-		
-			$checklist = @("Bkav","MicroWorld-eScan","nProtect","CMC","CAT-QuickHeal","McAfee","Malwarebytes","Zillya","AegisLab","CrowdStrike","K7GW","K7AntiVirus","TheHacker","Invincea","Baidu","F-Prot","Symantec","TotalDefense","Zoner","TrendMicro-HouseCall","Avast","ClamAV","GData","Kaspersky","BitDefender","NANO-Antivirus","ViRobot","Rising","Ad-Aware","Sophos","Comodo","F-Secure","DrWeb","VIPRE","TrendMicro","McAfee-GW-Edition","Emsisoft","SentinelOne","Cyren","Jiangmin","Webroot","Avira","Antiy-AVL","Kingsoft","Endgame","SUPERAntiSpyware","ZoneAlarm","Microsoft","AhnLab-V3","ALYac","AVware","MAX","VBA32","Cylance","WhiteArmor","Panda","Arcabit","ESET-NOD32","Tencent","Yandex","Ikarus","Fortinet","AVG","Paloalto","Qihoo-360","Ad-Aware","AegisLab","AhnLab-V3","ALYac","Arcabit","Avast","AVG","Avira (no cloud)","AVware","Baidu","BitDefender","CAT-QuickHeal","ClamAV","CrowdStrike Falcon (ML)","Cybereason","Cylance","Cyren","eGambit","Emsisoft","Endgame","ESET-NOD32","F-Secure","Fortinet","GData","Ikarus","Sophos ML","K7AntiVirus","K7GW","Kaspersky","Malwarebytes","MAX","McAfee","McAfee-GW-Edition","Microsoft","eScan","NANO-Antivirus","Palo Alto Networks (Known Signatures)","Panda","Qihoo-360","Rising","SentinelOne (Static ML)","Sophos AV","Symantec","Tencent","TrendMicro","TrendMicro-HouseCall","VBA32","VIPRE","ViRobot","Webroot","Zillya","ZoneAlarm by Check Point","Alibaba","Avast-Mobile","Bkav","CMC","Comodo","DrWeb","F-Prot","Jiangmin","Kingsoft","nProtect","SUPERAntiSpyware","Symantec Mobile Insight","TheHacker","TotalDefense","Trustlook","WhiteArmor","Yandex","Zoner")
-			$checklist = $checklist | sort -Unique
-			Write-Host $(($vt.scans).Length)
-			for([int]$count =0; $count -lt [int]$checklist.Length; [int]$count+=1)
-			{
-				
-				$ptarget = $vt.scans.$($checklist[$count])
 			
-				if(!([string]::IsNullOrEmpty($ptarget.result) -or [string]::IsNullOrWhiteSpace($ptarget.result)))
+				$checklist = @("Bkav","MicroWorld-eScan","nProtect","CMC","CAT-QuickHeal","McAfee","Malwarebytes","Zillya","AegisLab","CrowdStrike","K7GW","K7AntiVirus","TheHacker","Invincea","Baidu","F-Prot","Symantec","TotalDefense","Zoner","TrendMicro-HouseCall","Avast","ClamAV","GData","Kaspersky","BitDefender","NANO-Antivirus","ViRobot","Rising","Ad-Aware","Sophos","Comodo","F-Secure","DrWeb","VIPRE","TrendMicro","McAfee-GW-Edition","Emsisoft","SentinelOne","Cyren","Jiangmin","Webroot","Avira","Antiy-AVL","Kingsoft","Endgame","SUPERAntiSpyware","ZoneAlarm","Microsoft","AhnLab-V3","ALYac","AVware","MAX","VBA32","Cylance","WhiteArmor","Panda","Arcabit","ESET-NOD32","Tencent","Yandex","Ikarus","Fortinet","AVG","Paloalto","Qihoo-360","Ad-Aware","AegisLab","AhnLab-V3","ALYac","Arcabit","Avast","AVG","Avira (no cloud)","AVware","Baidu","BitDefender","CAT-QuickHeal","ClamAV","CrowdStrike Falcon (ML)","Cybereason","Cylance","Cyren","eGambit","Emsisoft","Endgame","ESET-NOD32","F-Secure","Fortinet","GData","Ikarus","Sophos ML","K7AntiVirus","K7GW","Kaspersky","Malwarebytes","MAX","McAfee","McAfee-GW-Edition","Microsoft","eScan","NANO-Antivirus","Palo Alto Networks (Known Signatures)","Panda","Qihoo-360","Rising","SentinelOne (Static ML)","Sophos AV","Symantec","Tencent","TrendMicro","TrendMicro-HouseCall","VBA32","VIPRE","ViRobot","Webroot","Zillya","ZoneAlarm by Check Point","Alibaba","Avast-Mobile","Bkav","CMC","Comodo","DrWeb","F-Prot","Jiangmin","Kingsoft","nProtect","SUPERAntiSpyware","Symantec Mobile Insight","TheHacker","TotalDefense","Trustlook","WhiteArmor","Yandex","Zoner")
+				$checklist = $checklist | sort -Unique
+				Write-Host $(($vt.scans).Length)
+				for([int]$count =0; $count -lt [int]$checklist.Length; [int]$count+=1)
 				{
-					[string]$output += ("|"+$ptarget.result)
+					
+					$ptarget = $vt.scans.$($checklist[$count])
+				
+					if(!([string]::IsNullOrEmpty($ptarget.result) -or [string]::IsNullOrWhiteSpace($ptarget.result)))
+					{
+						[string]$output += ("|"+$ptarget.result)
+					}
+					if($([int]$vt.hits+[int]$otx.count) -ne 0)
+					{
+						Write-Host "Suspect item found"
+						$suspecttest = $true
+					}
+					if($ptarget.result -imatch "emotet" -or $ptarget.result -imatch "qakbot" -or $ptarget.result -imatch "qbot" -or $ptarget.result -imatch "emo" -or $ptarget.result -imatch "panda" -or $ptarget.result -imatch "296387")
+					{
+						Write-Host "Potential hit found"
+						$test = $true
+					}
 				}
-				if($([int]$vt.hits+[int]$otx.count) -ne 0)
-				{
-					Write-Host "Suspect item found"
-					$suspecttest = $true
-				}
-				if($ptarget.result -imatch "emotet" -or $ptarget.result -imatch "qakbot" -or $ptarget.result -imatch "qbot" -or $ptarget.result -imatch "emo" -or $ptarget.result -imatch "panda" -or $ptarget.result -imatch "296387")
-				{
-					Write-Host "Potential hit found"
-					$test = $true
-				}
+				return @{'output'=$output;'priority'=$test;'suspect'=$suspecttest;'hash'=$target}
 			}
-			return @{'output'=$output;'priority'=$test;'suspect'=$suspecttest;'hash'=$target}
+			else
+			{
+				return @{'hash'="0000000000000000000000000000000000000000000000000000000000000000"}
+			}
+			
 		
 			
 		
@@ -196,19 +208,22 @@ foreach($job in $jobs)
 
 	
 	$temp= $job.Pipe.EndInvoke($job.Result)
+	if($temp.hasn -ne "0000000000000000000000000000000000000000000000000000000000000000")
+	{
+		if($temp.priority -eq $true)
+		{
+			$temp.output | Out-File -FilePath $prioritytarget -Append
+		}
+		elseif($temp.suspect -eq $true)
+		{
+			$temp.output | Out-File -FilePath $suspectoutput -Append
+		}
+		else
+		{
+			$temp.output | out-file -FilePath $outputtarget -Append
+			$knowngoods += $temp.hash
+		}
+	}
 	
-	if($temp.priority -eq $true)
-	{
-		$temp.output | Out-File -FilePath $prioritytarget -Append
-	}
-	elseif($temp.suspect -eq $true)
-	{
-		$temp.output | Out-File -FilePath $suspectoutput -Append
-	}
-	else
-	{
-		$temp.output | out-file -FilePath $outputtarget -Append
-		$knowngoods += $temp.hash
-	}
-	$knowngoods | sort -Unique | Out-File -FilePath $knowngoodsalpha
 }
+$knowngoods | sort -Unique | Out-File -FilePath $knowngoodsalpha
