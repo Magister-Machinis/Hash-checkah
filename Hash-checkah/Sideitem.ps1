@@ -1,5 +1,5 @@
 #
-# Sideitem.ps1
+# requires searchparam collumn listing ttps to check, a cblist collumn listing key(s) and a list of alertids
 #
 
 param (
@@ -24,16 +24,16 @@ function ingestconfig($conf)
 	
 	$searchparam = @()
 	$keys = @()
-	foreach($item in $conffile)
+	foreach($item in $conffile.cblist)
 	{
-		switch ($item.Type )
-		{
-			CBKey {$keys.Add(@{'X-AUTH-TOKEN'=$item.Data})}
-			CBSearch {$searchparam.Add($item.Data)}
-		}
+		$keys += @{"X-AUTH-TOKEN"=$item}
+	}
+	foreach($item in $conffile.searchparam)
+	{
+		$searchparam += $item
 	}
 	
-	return $searchparam,$keys
+	return @{"params"=$searchparam; "keys"=$keys
 }
 function sleepbar($seconds)
 {
@@ -49,9 +49,10 @@ function sleepbar($seconds)
 
 
 
-$SearchItem,$param = ingestconfig $configfile
+$temp = ingestconfig $configfile
 
-
+$SearchItem = $temp.searches
+$param = $temp.keys
 
 $("DataType `t Value") | Out-File -FilePath $outputtarget
 $("Hashs") | Out-File -FilePath $hashoutput
@@ -125,8 +126,7 @@ foreach($target in $targetlist)
 			{
 				$(("`t"+$item.longDescription) -replace('"<share><[a-zA-Z0-9"= ]+>',"")) -replace('<\/link>.+>"',"") | Out-File -FilePath $outputtarget -Append
 				$($item.longDescription) -match '=".+">'
-								
-				 $($matches[0] -replace '="',"") -replace '">',""| Out-File -FilePath $hashoutput -Append
+				$($matches[0] -replace '="',"") -replace '">',""| Out-File -FilePath $hashoutput -Append
 			}
 		
 		}
@@ -135,4 +135,3 @@ foreach($target in $targetlist)
 
 $sifter = Import-Csv -Delimiter "`t"  $hashoutput | sort Hashs -Unique
 $sifter| Export-Csv -Delimiter "`t" $hashoutput
-
