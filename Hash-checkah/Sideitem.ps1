@@ -33,7 +33,7 @@ function ingestconfig($conf)
 		$searchparam += $item
 	}
 	
-	return @{"params"=$searchparam; "keys"=$keys
+	return @{"params"=$searchparam; "keys"=$keys}
 }
 function sleepbar($seconds)
 {
@@ -51,7 +51,7 @@ function sleepbar($seconds)
 
 $temp = ingestconfig $configfile
 
-$SearchItem = $temp.searches
+$SearchItem = $temp.params
 $param = $temp.keys
 
 $("DataType `t Value") | Out-File -FilePath $outputtarget
