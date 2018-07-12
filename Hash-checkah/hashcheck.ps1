@@ -1,5 +1,5 @@
 #
-# Script.ps1
+# uses vt, otx, searchlist
 #
 
 param (
@@ -41,7 +41,7 @@ $auth
 )
 	function vtcheck($hash, $auth)
 	{
-		$param = @{'apikey' = $auth.vt; 'resource' = $hash}
+		$param = @{'apikey' = $auth.vt[0]; 'resource' = $hash}
 		$response = Invoke-RestMethod -Uri 'https://www.virustotal.com/vtapi/v2/file/report' -Body $param -Method Get
 		$info = @{'hits' = $response.positives; 'link' = $response.permalink; 'status'= $response.response_code; 'scans' = $response.scans}
 		if($null -eq ($response | ConvertFrom-Json))
@@ -55,7 +55,7 @@ $auth
 
 	function otxcheck($hash, $auth)
 	{
-		$param = @{'X-OTX-API-KEY' = $auth.otx}
+		$param = @{'X-OTX-API-KEY' = $auth.otx[0]}
 		$url = 'https://otx.alienvault.com/api/v1/indicators/file/' + $hash + '/general'
 		$response = Invoke-RestMethod -Uri $url -Body $param -Method GET
 		return $response.pulse_info
@@ -93,10 +93,13 @@ $auth
 						Write-Host "Suspect item found"
 						$suspecttest = $true
 					}
-					if($ptarget.result -imatch "emotet" -or $ptarget.result -imatch "qakbot" -or $ptarget.result -imatch "qbot" -or $ptarget.result -imatch "emo" -or $ptarget.result -imatch "panda" -or $ptarget.result -imatch "296387")
+					foreach($item in $auth.searchlist)
 					{
-						Write-Host "Potential hit found"
-						$test = $true
+						if($ptarget.result -imatch $item)
+						{
+							Write-Host "Potential hit found"
+							$test = $true
+						}
 					}
 				}
 				return @{'output'=$output;'priority'=$test;'suspect'=$suspecttest;'hash'=$target}
